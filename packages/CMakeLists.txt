@@ -39,34 +39,48 @@ else()
   execute_process(COMMAND unzip -o ${STM_ARCHIVE})
 endif()
 
+add_custom_target(debs ALL)
+
 # Install everything into a subdirectory so that we can package it from there.
 set(STM32F1_CHIP_TYPES L HD HD_VL MD MD_VL LD LD_VL XL)
 set(STM32F4_CHIP_TYPES 401xx 40_41xxx 427_437xx 429_439xx)
 set(STM32_CHIP_TYPES "${STM32${STM32_FAMILY}_CHIP_TYPES}")
 set(STM32${STM32_FAMILY}_StdPeriphLib_DIR "${STM_ARCHIVE_FULLDIR}")
 
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/cmsis-install/usr/${TARGET_TRIPLET}/")
+# Add targets for building cmsis and stdperiph for this family.
+set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install/usr/${TARGET_TRIPLET}/")
 add_subdirectory(../cmsis ${CMAKE_CURRENT_BINARY_DIR}/cmsis)
+add_subdirectory(../stdperiph ${CMAKE_CURRENT_BINARY_DIR}/stdperiph)
 
-set(PACKAGE_LIBRARY "cmsis")
-set(PACKAGE_NAME "stm32${STM32_FAMILY_LOWER}-${PACKAGE_LIBRARY}")
+# Ensure all those get built.
+add_custom_target(install_stm32${STM32_FAMILY_LOWER})
+foreach(CHIP_TYPE ${STM32_CHIP_TYPES})
+  add_dependencies(install_stm32${STM32_FAMILY_LOWER}
+                   cmsis_${STM32_FAMILY_LOWER}_${CHIP_TYPE} 
+                   stdperiph_${STM32_FAMILY_LOWER}_${CHIP_TYPE})
+endforeach()
+
+add_custom_command(TARGET install_stm32${STM32_FAMILY_LOWER} POST_BUILD
+  COMMAND ${CMAKE_COMMAND} -P cmake_install.cmake
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules/FindCMSIS.cmake
+          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules
+  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules/FindStdPeriphLib.cmake
+          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules
+)
+
+# Create package.
+set(PACKAGE_NAME "stm32${STM32_FAMILY_LOWER}-stdperiph")
 set(PACKAGE_VERSION "${STM_ARCHIVE_VERSION_${STM32_FAMILY}}")
 set(PACKAGE_FILENAME "${PACKAGE_NAME}_${PACKAGE_VERSION}_all.${PACKAGE_TYPE}")
 
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_FILENAME}
   COMMAND fpm -a all -s dir -t ${PACKAGE_TYPE} -n ${PACKAGE_NAME}
-              -v ${PACKAGE_VERSION} -C ${PACKAGE_LIBRARY}-install usr
+              -d gcc-arm-none-eabi
+              -v ${PACKAGE_VERSION} -C install usr
 )
-add_custom_target(_${PACKAGE_FILENAME} ALL
+add_custom_target(${PACKAGE_FILENAME}_
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_FILENAME}
 )
-message("tt: ${CMAKE_CURRENT_BINARY_DIR}/${PACKAGE_FILENAME}")
-
-
-
-set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/stdperiph-install/usr/${TARGET_TRIPLET}/")
-add_subdirectory(../stdperiph ${CMAKE_CURRENT_BINARY_DIR}/stdperiph)
-
-
-
+add_dependencies(${PACKAGE_FILENAME}_ install_stm32${STM32_FAMILY_LOWER})
+add_dependencies(debs ${PACKAGE_FILENAME}_)
