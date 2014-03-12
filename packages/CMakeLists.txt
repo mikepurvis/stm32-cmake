@@ -47,9 +47,12 @@ set(STM32F4_CHIP_TYPES 401xx 40_41xxx 427_437xx 429_439xx)
 set(STM32_CHIP_TYPES "${STM32${STM32_FAMILY}_CHIP_TYPES}")
 set(STM32${STM32_FAMILY}_StdPeriphLib_DIR "${STM_ARCHIVE_FULLDIR}")
 
-# Add targets for building cmsis and stdperiph for this family.
+# Add targets for building cmsis libraries
 set(CMAKE_INSTALL_PREFIX "${CMAKE_CURRENT_BINARY_DIR}/install/usr/${TARGET_TRIPLET}/")
 add_subdirectory(../cmsis ${CMAKE_CURRENT_BINARY_DIR}/cmsis)
+
+# Add targets for building stdperiph libraries, which need the cmsis headers
+get_property(CMSIS_INCLUDE_DIR DIRECTORY ../cmsis PROPERTY INCLUDE_DIRECTORIES)
 add_subdirectory(../stdperiph ${CMAKE_CURRENT_BINARY_DIR}/stdperiph)
 
 # Ensure all those get built.
