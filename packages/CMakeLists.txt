@@ -64,9 +64,9 @@ add_dependencies(install_stm32${STM32_FAMILY_LOWER}
 add_custom_command(TARGET install_stm32${STM32_FAMILY_LOWER} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -P cmake_install.cmake
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules/FindCMSIS.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules
+          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules/FindCMSIS.cmake
   COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/Modules/FindStdPeriphLib.cmake
-          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules
+          ${CMAKE_CURRENT_BINARY_DIR}/install/usr/share/cmake-2.8/Modules/FindStdPeriphLib.cmake
 )
 
 # Create package.
