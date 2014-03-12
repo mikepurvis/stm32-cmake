@@ -42,7 +42,7 @@ endif()
 add_custom_target(debs ALL)
 
 # Install everything into a subdirectory so that we can package it from there.
-set(STM32F1_CHIP_TYPES L HD HD_VL MD MD_VL LD LD_VL XL)
+set(STM32F1_CHIP_TYPES HD HD_VL MD MD_VL LD LD_VL XL)
 set(STM32F4_CHIP_TYPES 401xx 40_41xxx 427_437xx 429_439xx)
 set(STM32_CHIP_TYPES "${STM32${STM32_FAMILY}_CHIP_TYPES}")
 set(STM32${STM32_FAMILY}_StdPeriphLib_DIR "${STM_ARCHIVE_FULLDIR}")
@@ -57,11 +57,9 @@ add_subdirectory(../stdperiph ${CMAKE_CURRENT_BINARY_DIR}/stdperiph)
 
 # Ensure all those get built.
 add_custom_target(install_stm32${STM32_FAMILY_LOWER})
-foreach(CHIP_TYPE ${STM32_CHIP_TYPES})
-  add_dependencies(install_stm32${STM32_FAMILY_LOWER}
-                   cmsis_${STM32_FAMILY_LOWER}_${CHIP_TYPE} 
-                   stdperiph_${STM32_FAMILY_LOWER}_${CHIP_TYPE})
-endforeach()
+add_dependencies(install_stm32${STM32_FAMILY_LOWER}
+                 cmsis_${STM32_FAMILY_LOWER}
+                 stdperiph_${STM32_FAMILY_LOWER})
 
 add_custom_command(TARGET install_stm32${STM32_FAMILY_LOWER} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -P cmake_install.cmake
